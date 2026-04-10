@@ -90,7 +90,6 @@ function extractAmazonProduct(html: string) {
   };
 }
 
-// ── Flipkart extraction ─────────────────────────────────────────────────────
 function extractFlipkartProduct(html: string, query: string) {
   const $ = cheerio.load(html);
   // Keep all words, don't filter length > 2 because we need numbers like "16" or "M2"
@@ -114,10 +113,19 @@ function extractFlipkartProduct(html: string, query: string) {
   const name = targetImg.attr('alt') || 'Flipkart Product';
   const image = targetImg.attr('src') || '';
 
-  // Get the product container wrapping the image
-  let productContainer = targetImg.closest('a[href*="/p/"]');
-  if (!productContainer.length) {
-    productContainer = targetImg.closest('div').parent().parent();
+  // To find the actual product card container, we traverse up from the image 
+  // until we hit a container that has price text (₹). This guarantees we isolate 
+  // the product and its price, instead of grabbing just the image wrapper.
+  let productContainer = targetImg.parent();
+  for (let i = 0; i < 8; i++) {
+    if (productContainer.text().includes('₹')) {
+      break; // Found the container holding the price
+    }
+    if (productContainer.parent().length) {
+      productContainer = productContainer.parent();
+    } else {
+      break;
+    }
   }
 
   let url = 'https://www.flipkart.com/search?q=' + encodeURIComponent(query);
@@ -126,8 +134,13 @@ function extractFlipkartProduct(html: string, query: string) {
     url = 'https://www.flipkart.com' + href.split('?')[0]; // Split to remove long tracking query params
   }
 
-  const containerText = productContainer.text().replace(/\s+/g, ' ');
-  const allPrices = Array.from(containerText.matchAll(/₹\s*([\d,]{3,9})/g));
+  // To prevent numbers from smashing together (e.g. </div><div> -> 289989), we inject spaces
+  const containerText = productContainer.html() 
+    ? cheerio.load(productContainer.html() || '')('*').text().replace(/\s+/g, ' ')
+    : productContainer.text().replace(/\s+/g, ' ');
+
+  // Look for any price format with ₹
+  const allPrices = Array.from(containerText.matchAll(/₹\s*([\d,]{3,10})/g));
 
   let price = 0;
   let originalPrice = 0;
@@ -143,16 +156,16 @@ function extractFlipkartProduct(html: string, query: string) {
     }
   }
 
-  // Fallback scenario
+  // Fallback scenario: Scan the whole body, but allow 3-digit prices ([\d,]{3,10})
   if (price === 0) {
     const bodyText = $('body').text().replace(/\s+/g, ' ');
-    const fallback = bodyText.match(/₹\s*([\d,]{4,9})/);
+    const fallback = bodyText.match(/₹\s*([\d,]{3,10})/);
     price = fallback ? parseInt(fallback[1].replace(/,/g, ''), 10) : 0;
     originalPrice = Math.round(price * 1.1);
   }
   
-  // Protect against extracting EMI prices (e.g. ₹4,500 EMI for an iPhone)
-  if (price < 10000 && originalPrice > 30000) {
+  // Protect against extracting EMI prices
+  if (price < 3000 && originalPrice > 20000) {
     price = originalPrice;
     originalPrice = Math.round(price * 1.1);
   }
