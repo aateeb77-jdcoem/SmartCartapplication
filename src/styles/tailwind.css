@@ -1,0 +1,195 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+@layer base {
+  :root {
+    --background: 222 47% 5%;
+    --foreground: 210 40% 96%;
+    --card: 222 35% 8%;
+    --card-foreground: 210 40% 96%;
+    --border: 217 32% 14%;
+    --input: 217 32% 12%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --muted: 217 32% 18%;
+    --muted-foreground: 215 20% 55%;
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --ring: 239 84% 67%;
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    @apply bg-slate-950 text-slate-100;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-slate-950 text-slate-100 min-h-screen;
+  }
+
+  .font-mono {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl;
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300 hover:bg-slate-800/60 hover:border-slate-600/60 hover:shadow-2xl hover:shadow-indigo-500/5;
+  }
+
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(30, 41, 59, 0) 0%,
+      rgba(51, 65, 85, 0.4) 50%,
+      rgba(30, 41, 59, 0) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s infinite;
+  }
+
+  .skeleton {
+    @apply bg-slate-800/60 rounded-lg relative overflow-hidden;
+  }
+
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(148, 163, 184, 0.06) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+
+  .price-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .verdict-banner {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+    @apply border border-indigo-500/30 rounded-2xl;
+  }
+
+  .search-glow:focus-within {
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.4), 0 0 40px rgba(99, 102, 241, 0.12);
+  }
+
+  .btn-primary {
+    @apply bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-semibold rounded-xl px-6 py-3 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-slate-700/50 active:scale-[0.98] text-slate-300 hover:text-slate-100 font-medium rounded-xl px-4 py-2 transition-all duration-150;
+  }
+
+  .input-field {
+    @apply w-full bg-slate-800/60 border border-slate-700/60 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500/60 focus:bg-slate-800/80 focus:ring-1 focus:ring-indigo-500/30 transition-all duration-200;
+  }
+
+  .badge-lowest {
+    @apply bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+
+  .badge-higher {
+    @apply bg-rose-500/15 text-rose-400 border border-rose-500/25 text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+
+  .badge-neutral {
+    @apply bg-slate-700/60 text-slate-400 border border-slate-600/40 text-xs font-medium px-2.5 py-1 rounded-full;
+  }
+
+  .tab-active {
+    @apply text-indigo-400 border-b-2 border-indigo-500 pb-2;
+  }
+
+  .tab-inactive {
+    @apply text-slate-500 hover:text-slate-300 pb-2 border-b-2 border-transparent transition-colors duration-200;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.4); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s ease forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Recharts overrides */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: rgba(51, 65, 85, 0.5);
+}
+
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(71, 85, 105, 0.6);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.8);
+}
