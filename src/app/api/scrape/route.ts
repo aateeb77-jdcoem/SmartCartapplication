@@ -93,16 +93,18 @@ function extractAmazonProduct(html: string) {
 // ── Flipkart extraction ─────────────────────────────────────────────────────
 function extractFlipkartProduct(html: string, query: string) {
   const $ = cheerio.load(html);
-  const queryWords = query.toLowerCase().split(' ').filter((w) => w.length > 2);
+  // Keep all words, don't filter length > 2 because we need numbers like "16" or "M2"
+  const queryWords = query.toLowerCase().split(' ').filter(Boolean);
 
-  // Find the first product image matching the query
   let targetImg = $('img[alt]')
     .filter((_, el) => {
       const alt = $(el).attr('alt')?.toLowerCase() || '';
-      return queryWords.some((w) => alt.includes(w)) && alt.length > 10;
+      // Must contain EVERY word of the query for strict matching
+      return queryWords.every((w) => alt.includes(w)) && alt.length > 5;
     })
     .first();
 
+  // If strict matching fails, fallback to the first reasonable image
   if (!targetImg.length) {
     targetImg = $('img[alt]')
       .filter((_, el) => ($(el).attr('alt')?.length || 0) > 10)
@@ -112,10 +114,16 @@ function extractFlipkartProduct(html: string, query: string) {
   const name = targetImg.attr('alt') || 'Flipkart Product';
   const image = targetImg.attr('src') || '';
 
-  // Scope price extraction to the product container, not the whole page
+  // Get the product container wrapping the image
   let productContainer = targetImg.closest('a[href*="/p/"]');
   if (!productContainer.length) {
     productContainer = targetImg.closest('div').parent().parent();
+  }
+
+  let url = 'https://www.flipkart.com/search?q=' + encodeURIComponent(query);
+  const href = productContainer.attr('href') || productContainer.find('a[href*="/p/"]').attr('href');
+  if (href && href.startsWith('/')) {
+    url = 'https://www.flipkart.com' + href.split('?')[0]; // Split to remove long tracking query params
   }
 
   const containerText = productContainer.text().replace(/\s+/g, ' ');
@@ -128,24 +136,25 @@ function extractFlipkartProduct(html: string, query: string) {
     price = parseInt(allPrices[0][1].replace(/,/g, ''), 10) || 0;
     if (allPrices.length > 1) {
       originalPrice = parseInt(allPrices[1][1].replace(/,/g, ''), 10) || price;
+      // Ensure price is the smaller one and originalPrice is the larger one
       if (price > originalPrice) [price, originalPrice] = [originalPrice, price];
     } else {
       originalPrice = Math.round(price * 1.1);
     }
   }
 
-  // Fallback — scan entire body
+  // Fallback scenario
   if (price === 0) {
     const bodyText = $('body').text().replace(/\s+/g, ' ');
     const fallback = bodyText.match(/₹\s*([\d,]{4,9})/);
     price = fallback ? parseInt(fallback[1].replace(/,/g, ''), 10) : 0;
     originalPrice = Math.round(price * 1.1);
   }
-
-  let url = 'https://www.flipkart.com/search?q=' + encodeURIComponent(query);
-  const href = productContainer.attr('href');
-  if (href && href.startsWith('/')) {
-    url = 'https://www.flipkart.com' + href;
+  
+  // Protect against extracting EMI prices (e.g. ₹4,500 EMI for an iPhone)
+  if (price < 10000 && originalPrice > 30000) {
+    price = originalPrice;
+    originalPrice = Math.round(price * 1.1);
   }
 
   const inStock = price > 0;
